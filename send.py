@@ -5,7 +5,22 @@ from indieweb_utils import send_webmention
 
 SUPPORTED_TYPES = ["h-entry", "h-review", "h-event", "h-recipe", "h-resume", "h-product", "h-cite"]
 
-def _get_nested_h_entry(parsed_mf2_tree: dict) -> List[dict]:
+def _check_supported_type(parsed_mf2_tree: dict, supported_types: list) -> bool:
+    """
+    Check if the parsed mf2 tree contains a supported type.
+
+    :param parsed_mf2_tree: The parsed mf2 tree.
+    :type parsed_mf2_tree: dict
+    :returns: True if the parsed mf2 tree contains a supported type, False otherwise.
+    :rtype: bool
+    """
+    for entry in parsed_mf2_tree.get("items"):
+        if entry.get("type", [])[0] in supported_types:
+            return True
+
+    return False
+
+def _get_nested_h_entry(parsed_mf2_tree: dict, supported_types: list) -> List[dict]:
     """
     Get the nested h-* objects from a parsed mf2 tree.
 
@@ -17,14 +32,14 @@ def _get_nested_h_entry(parsed_mf2_tree: dict) -> List[dict]:
     nested_entry = []
 
     for entry in parsed_mf2_tree.get("items"):
-        if entry.get("type", [])[0] in SUPPORTED_TYPES:
+        if _check_supported_type(entry, supported_types):
             for nested_entry in entry.get("children", []):
-                if nested_entry.get("type", [])[0] in SUPPORTED_TYPES:
+                if _check_supported_type(nested_entry, supported_types):
                     nested_entry = [nested_entry]
                     break
 
                 if nested_entry.get("type") == ["h-feed"]:
-                    nested_entry = _recursively_get_entries_from_nested_entry(nested_entry.get("children"))
+                    nested_entry = _recursively_get_entries_from_nested_entry(nested_entry.get("children"), supported_types)
                     if nested_entry == None:
                         nested_entry = []
                         continue
@@ -36,7 +51,7 @@ def _get_nested_h_entry(parsed_mf2_tree: dict) -> List[dict]:
 
     return nested_entry
 
-def _recursively_get_entries_from_nested_entry(nested_entry: dict) -> List[dict]:
+def _recursively_get_entries_from_nested_entry(nested_entry: dict, supported_types: list) -> List[dict]:
     """
     Recursively get all entries from a nested entry.
 
@@ -49,15 +64,15 @@ def _recursively_get_entries_from_nested_entry(nested_entry: dict) -> List[dict]
     entries = []
 
     for entry in nested_entry:
-        if entry.get("type", [])[0] in SUPPORTED_TYPES:
+        if _check_supported_type(entry, supported_types):
             entries.append(entry)
 
         if entry.get("type") == ["h-feed"]:
-            entries.extend(_recursively_get_entries_from_nested_entry(entry.get("children")))
+            entries.extend(_recursively_get_entries_from_nested_entry(entry.get("children"), supported_types))
 
     return entries
 
-def receive_salmention(current_page_contents: str, original_post_contents: str) -> Tuple[List[dict], List[str], List[str]]:
+def receive_salmention(current_page_contents: str, original_post_contents: str, supported_types: list = SUPPORTED_TYPES) -> Tuple[List[dict], List[str], List[str]]:
     """
     Process a Salmention. Call this function only when you receive a Webmention
     to a page that has already received a Webmention.
@@ -75,14 +90,14 @@ def receive_salmention(current_page_contents: str, original_post_contents: str) 
 
         from indieweb_utils import receive_salmention
 
-        receive_salmention('http://example.com/post/123', '<html>...</html>')
+        receive_salmention('<html>...</html>', '<html>...</html>')
     """
 
     new_parsed_mf2_tree = mf2py.parse(current_page_contents)
-    new_nested_entry = _get_nested_h_entry(new_parsed_mf2_tree)
+    new_nested_entry = _get_nested_h_entry(new_parsed_mf2_tree, supported_types)
 
     original_parsed_mf2_tree = mf2py.parse(original_post_contents)
-    original_nested_entry = _get_nested_h_entry(original_parsed_mf2_tree)
+    original_nested_entry = _get_nested_h_entry(original_parsed_mf2_tree, supported_types)
 
     # return new nested responses
     new_nested_responses = []
@@ -105,7 +120,7 @@ def receive_salmention(current_page_contents: str, original_post_contents: str) 
         if response["properties"].get("url"):
             post_url = response["properties"].get("url")[0]
             try:
-                send_webmention(response["properties"].get("url")[0], "https://aaronparecki.com")
+                send_webmention(response["properties"].get("url")[0], post_url)
                 urls_webmentions_sent["success"].append(post_url)
             except:
                 urls_webmentions_sent["failed"].append(post_url)
