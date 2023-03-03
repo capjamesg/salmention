@@ -1,10 +1,14 @@
 from typing import List, Tuple
 
 import mf2py
+import requests
 from indieweb_utils import send_webmention
 
 SUPPORTED_TYPES = [
     "h-entry",
+]
+
+EXPANDED_SUPPORTED_TYPES = [
     "h-review",
     "h-event",
     "h-recipe",
@@ -25,9 +29,8 @@ def _check_supported_type(parsed_mf2_tree: dict, supported_types: list) -> bool:
     :returns: True if the parsed mf2 tree contains a supported type, False otherwise.
     :rtype: bool
     """
-    for entry in parsed_mf2_tree.get("items"):
-        if entry.get("type", [])[0] in supported_types:
-            return True
+    if parsed_mf2_tree.get("type", [])[0] in supported_types:
+        return True
 
     return False
 
@@ -47,23 +50,20 @@ def _get_nested_h_entry(parsed_mf2_tree: dict, supported_types: list) -> List[di
 
     for entry in parsed_mf2_tree.get("items"):
         if _check_supported_type(entry, supported_types):
-            for nested_entry in entry.get("children", []):
-                if _check_supported_type(nested_entry, supported_types):
-                    nested_entry = [nested_entry]
+            for nested in entry.get("children", []):
+                if _check_supported_type(nested, supported_types):
+                    nested_entry.extend(nested)
                     break
 
-                if nested_entry.get("type") == ["h-feed"]:
-                    nested_entry = _recursively_get_entries_from_nested_entry(
-                        nested_entry.get("children"), supported_types
-                    )
+                if nested.get("type") == ["h-feed"]:
+                    nested_entry.extend(_recursively_get_entries_from_nested_entry(
+                        nested.get("children"), supported_types
+                    ))
                     if nested_entry == None:
                         nested_entry = []
                         continue
 
                     break
-
-        if nested_entry != {}:
-            break
 
     return nested_entry
 
@@ -87,6 +87,7 @@ def _recursively_get_entries_from_nested_entry(
     for entry in nested_entry:
         if _check_supported_type(entry, supported_types):
             entries.append(entry)
+            print('e')
 
         if entry.get("type") == ["h-feed"]:
             entries.extend(
@@ -139,6 +140,7 @@ def receive_salmention(
     all_original_urls = [
         x["properties"].get("url", [])[0] for x in original_nested_entry
     ]
+
     all_new_urls = [x["properties"].get("url", [])[0] for x in new_nested_entry]
 
     deleted_posts = [x for x in all_new_urls if x not in all_original_urls]
@@ -153,6 +155,7 @@ def receive_salmention(
 
     # for all nested urls, send webmentions
     for response in original_nested_entry:
+        # and url not in all_new_urls
         if response["properties"].get("url"):
             post_url = response["properties"].get("url")[0]
             try:
@@ -161,16 +164,23 @@ def receive_salmention(
             except:
                 urls_webmentions_sent["failed"].append(post_url)
 
-            new_nested_responses.append(response)
+            if response["properties"]["url"][0] not in all_new_urls:
+                new_nested_responses.append(response)
 
     return new_nested_responses, urls_webmentions_sent, deleted_posts
 
+if __name__ == "__main__":
+    with open("site_reply_to_jamesgblog.html") as file:
+        site_reply_to_jamesgblog = file.read()
 
-with open("new.html", "r") as f:
-    contents = f.read()
+    with open("reply_to_reply.html") as file:
+        reply_to_reply = file.read()
 
-new, sent, deleted = receive_salmention("", contents)
+    with open("jamesgblog.html") as file:
+        jamesgblog = file.read()
 
-print("new", new)
-print("sent", sent)
-print("deleted", deleted)
+    new, sent, deleted = receive_salmention(reply_to_reply, site_reply_to_jamesgblog)
+
+    print("new", new)
+    print("sent", sent)
+    print("deleted", deleted)

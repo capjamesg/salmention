@@ -1,0 +1,423 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+
+    
+      <title>Announcing highlight.js, an extension to highlight text on web pages | James' Coffee Blog</title>
+    
+
+    <link rel="stylesheet" href="/assets/styles/styles.css" />
+    <link rel="stylesheet" href="/assets/styles/annotate.css" />
+
+    <link href="mailto:jamesg@jamesg.blog" rel="me">
+
+    <!-- This link specifies a manifest that states a search engine you can use on my site. -->
+    <link rel="search" type="application/opensearchdescription+xml" title="IndieWeb Search" href="/assets/opensearch.xml">
+
+    <!-- This link contains information that mobile devices use to render progressive web apps (PWAs).
+        PWAs make websites feel more native to some mobile devices when a web page is added to a device home screen
+        or saved as a device app. -->
+    <link rel="manifest" href="/assets/manifest.json">
+
+    
+      <meta name="description" content="I participated in IndieWeb Create Day, an online event during which people in the IndieWeb come together to work on personal projects, this Boxing Day. I decided to start on a new project. I wanted to build a tool that would let me highlight specific pieces of text on my website and send those highlights to someone else for them. I have previously built a tool, fragmention.js, that lets you link to a specific paragraph of text, but this tool has its limitations: I can't link to multiple parts of a web page, I can only link to full paragraphs." />
+    
+    
+    
+      <meta property="og:image" content="/assets/movies.png">
+    
+
+    <link rel="webmention" href="https://webmention.jamesg.blog/endpoint" />
+    <link rel="pingback" href="https://webmention.io/jamesg.blog/xmlrpc" />
+
+    <link rel="icon" href="/favicon.ico" />
+
+    <link rel="apple-touch-icon-precomposed" href="/favicon.ico" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta rel="canonical" href="https://jamesg.blog/2022/12/30/highlight-js/" />
+
+    <script type="text/javascript" src="/assets/js/indieconfig.js"></script>
+    <script type="text/javascript" src="/assets/js/webaction.js"></script>
+
+    <link rel="self" href="https://jamesg.blog/2022/12/30/highlight-js/" />
+
+    <!-- This script lets someone link directly to a particular piece of text in a page.
+        See https://jamesg.blog/2022/10/11/fragmention-links/ for more information. -->
+    <script src="/assets/js/annotate.js"></script>
+
+    
+
+    
+
+    <!-- The styles below show up when a user has dark mode enabled on my site.
+        The logic for when these styles are applied is in a script further down on the page. -->
+    <style id="darkmode" media="none">
+      html, .citation_box, details, summary, .social li {
+        background-color: #1F2937;
+      }
+      .highlight {
+        color: black;
+      }
+      .highlight a {
+        color: blue;
+        border-bottom: 2px dotted blue;
+      }
+      .highlight a:hover {
+        color: violet;
+      }
+      a {
+        color: lightgreen;
+        border-bottom: 2px dotted lightgreen;
+      }
+      a:hover {
+        color: #ccc;
+      }
+      h1, h2, h3 {
+        color: orange;
+      }
+      .social_interaction, .webmention {
+        background: none;
+      }
+      p, li, dt, dd, .indieweb_footer, input, label {
+        color: white;
+      }
+      input, textarea, code, pre, main {
+        background-color: #0c2548;
+        color: #ccc;
+      }
+    </style>
+    <link href="/assets/styles/prism.css" rel="stylesheet" />
+  </head>
+  <body>
+    <main>
+        <!-- Skip link so that screen reader users can skip narration of the navigation bar. -->
+      <a href="#main" class="accessibility_label">Skip to main content</a>
+    	<nav id="top_navigation">
+	<p><a href="https://jamesg.blog" rel="home">James' Coffee Blog <span aria-hidden="true" class="seasonal_emoji">☕</span></a></p>
+	<ul>
+		<li><a href="/indieweb/">IndieWeb</a></li>
+		<li><a href="/coffee/">Coffee</a></li>
+		<li><a href="/projects/">Projects</a></li>
+		<li><a href="/interviews/">Interviews</a></li>
+		<li><a href="https://jamesg.coffee">Notes</a></li>
+		<li><a href="#" onclick="document.querySelector('command-k').open(); return false;">Search</a></li>
+	</ul>
+</nav>
+      <!-- This code applies dark mode to a page if:
+            1. A visitor has dark mode enabled on their system and hasn't disabled dark mode using the button
+                in the site site navigation bar.
+            2. A visitor has enabled dark mode using the button in the site navigation bar.
+            Preferences for dark mode are saved across page views.
+            See https://github.com/capjamesg/darkmode.js for more info. -->
+      <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.getElementById('darkmode').media = "all";
+        }
+
+        if (localStorage.getItem('darkmode') == "true") {
+          document.getElementById('darkmode').media = "all";
+        } else if (localStorage.getItem('darkmode') == "false") {
+          document.getElementById('darkmode').media = "none";
+        }
+
+        var navigation = document.getElementById("top_navigation");
+        var ul = navigation.getElementsByTagName("ul")[0];
+        
+        var li = document.createElement("li");
+        var dark_style = document.getElementById("darkmode");
+  
+        if (dark_style.media === "all") {
+          li.innerHTML = "<a onclick='toggleTheme();'>Light Mode</a>";
+        } else {
+          li.innerHTML = "<a onclick='toggleTheme();'>Dark Mode</a>";
+        }
+
+        var last_li = ul.getElementsByTagName("li")[ul.getElementsByTagName("li").length - 1];
+
+        ul.insertBefore(li, last_li);
+  
+        function toggleTheme() {
+          if (dark_style.media === "all") {
+            dark_style.media = "none";
+            li.innerHTML = "<a onclick='toggleTheme();'>Dark Mode</a>";
+            localStorage.setItem('darkmode', 'false');
+          } else {
+            dark_style.media = "all";
+            li.innerHTML = "<a onclick='toggleTheme();'>Light Mode</a>";
+            localStorage.setItem('darkmode', 'true');
+          }
+        }
+      </script>
+      <script>var hovercards = {}</script><script>var hovercards = {"https://events.indieweb.org/2022/12/indieweb-create-day-DWikudsEYbg3": {"title": "IndieWeb Create Day | December 26, 2022 | IndieWeb Events", "description": "", "photo": ""}, "https://github.com/cure53/DOMPurify": {"title": "GitHub - cure53/DOMPurify: DOMPurify - a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. DOMPurify works with a secure default, but offers a lot of configurability and hooks. Demo:", "description": "DOMPurify - a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. DOMPurify works with a secure default, but offers a lot of configurability and hooks. Demo: - GitHub - cure53/DOMPurify: DOMPurify - a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML, MathML and SVG. DOMPurify works with a secure default, but offers a lot of configurability and hooks. Demo:", "photo": "https://opengraph.githubassets.com/d2d3c3e03af37bb52d578dde0cb0350eb83ddb1cd3a83bdc0188dae2b2bf9c25/cure53/DOMPurify"}, "https://web.hypothes.is": {"title": "Home", "description": "...", "photo": ""}}</script><div id="main">
+    	 <article class="h-entry">
+	<header>
+		<h1 class="p-name">Announcing highlight.js, an extension to highlight text on web pages</h1>
+		<p><em>Written by <a rel="author" class="p-author h-card" href="https://jamesg.blog">James</a>. Published on
+			<a href='/2022/12'><time class="dt-published" datetime="2022-12-30T00:00:00">December 30, 2022</time></a>
+			 under the <a href="/category/indieweb" class="p-category">IndieWeb</a> category.</em></p>
+		
+		
+		<a href="/assets/movies.png" class="noborder"><img src="/assets/movies.png" alt="A screenshot of two pieces of highlighted text on a web page" class="u-featured"></a>
+		
+	</header>
+	<section class="e-content special-image social_interaction">
+		<p>I participated in <a href="https://events.indieweb.org/2022/12/indieweb-create-day-DWikudsEYbg3">IndieWeb Create Day</a>, an online event during which people in the IndieWeb come together to work on personal projects, this Boxing Day. I decided to start on a new project. I wanted to build a tool that would let me highlight specific pieces of text on my website and send those highlights to someone else for them. I have previously built a tool, fragmention.js, that lets you link to a specific paragraph of text, but this tool has its limitations: I can't link to multiple parts of a web page, I can only link to full paragraphs.</p>
+<p>I wanted this project to work on both my personal site and my wiki, which meant it had to be site-agnostic. Thus, I decided to architect my code in such a way that it would not be dependent on my site. I built a separate stylesheet for the project and use JavaScript to dynamically insert all of the elements that the extension required. This turned out to be good preparation for turning the script into a browser extension, something I will talk about later in the post.</p>
+<p>highlight.js, the name I gave to this project has a simple goal: enable people to create sharable links that highlight text on a web page. </p>
+<p>I had a few requirements:</p>
+<ol>
+<li>I should be able to highlight multiple pieces of text on a web page.</li>
+<li>I should have an interactive highlighting interface through which I can select different pieces of text.</li>
+<li>I should be able to remove highlights easily.</li>
+<li>Links must be sharable without any installation requirements (i.e. you should not have to download a browser extension to use the tool).</li>
+</ol>
+<p>To build the highlighting feature, where I can highlight text with my cursor that will be turned into a URL, I used the native browser <code>window.getSelection()</code> function. This lets me get the text a user has highlighted on the page. If the highlighted text is in a <code>p</code> or an <code>li</code> tag, highlight.js will save it to a list of highlights. highlight.js updates the URL of a page to add a new fragment (<code>#</code>) attribute, like this:</p>
+<pre class="language-markup"><code>
+#text=this is an example
+</code></pre>
+
+<p>The above URL fragment would link to the "this is an example" text on the page. Highlights are comma-separated in URLs, which means that I can link to multiple pieces of text on a page:</p>
+<pre class="language-markup"><code>
+#text=this is an example,#text=another example
+</code></pre>
+
+<p>Only exact matches are supported. highlight.js is case sensitive.</p>
+<p>I then replace the highlighted text on the page with a <code>span</code> tag with a purple background colour. This <code>span</code> tag has an inline property so as to ensure the text fits in with the rest of the text in a sentence or paragraph. Appropriate sanitization is conducted using the <code>DOMPurify</code> <a href="https://github.com/cure53/DOMPurify">library</a>, recommended by the Mozilla Developer Network for HTML sanitization in browser extensions.</p>
+<p>Initially, the highlighting feature was enabled for all users. This was not appropriate since not everyone would want to highlight text. I decided to add a control shortcut, <code>Control + K</code> that, when triggered, would move a web page into a highlighting mode. This mode keeps track of how many highlights have been recorded on a page. Here's an example of a page in highlighting mode:</p>
+<p>When you press "Copy URL", you'll get a URL that you can share with someone else. Because highlight.js lives on my website, the link will work for anyone. I also installed highlight.js on my wiki, which means that I can highlight text on there too. My initial use case for this project was to be able to highlight specific movies on my list of recommended movies, which I am now able to do.</p>
+<p>Here is an example of a page on my wiki with highlighted text:</p>
+<p><a href="/assets/movies.png"><a href="/assets/movies.png"><img src="/assets/movies.png" alt="The Movies page on my wiki with highlighted text" /></a></a></p>
+<p>highlight.js is available for all website visitors. Press <code>Control + K</code> and highlight text on the page to get a sharable URL that, when opened, will highlight the text you selected.</p>
+<p>Toward the end of the Create Day meetup, I believe <a href="https://ragt.ag">Angelo</a> wondered whether the code could be put into a browser extension to allow people to highlight any website. I have worked on browser extensions before, but mainly on new tab pages so I had a bit of reading to do. It turns out that with a bit of metadata in a <code>manifest.js</code> file I was able to get pretty close to having a working version of highlight.js that could be applied to any website.</p>
+<p>I had to change my code so that highlight.js annotated text at the end of the JavaScript code, rather than on a DOMContentLoaded event. I ran into issues using DOMContentLoaded. With this change, I had a script that let me highlight text on any website and create a sharable link. The sharable link would work if you have the highlight.js extension installed.</p>
+<p>I am excited to use this tool for personal highlighting. I can record excerpts of text on a page and save my highlights for later use. I can envision a page on my website that shows quotations I find interesting from websites and that links directly to the quotation on the website (so long as you have the highlight.js extension installed, otherwise the page will load as normal).</p>
+<p>After reading some Mozilla web extensions documentation and adding the requisite meta information, I had a version of highlight.js ready for the Mozilla store. I submitted the extension late at night because Create Day was hosted on Pacific Time. Within about a day, the extension was approved. I'm excited to announce you can start using highlight.js on Firefox today by downloading the extension. I have submitted a version to the Chrome extension store, but I expect to wait a bit longer for the extension to be approved.</p>
+<p>Here is a short video that shows me highlighting two pieces of text on Wikipedia and creating a link for me to use later:</p>
+<video controls width="100%">
+  <source src="/assets/demo.mov" type="video/mp4">
+</video>
+
+<p>I don't presently have plans to expand this into an annotation extension, as I believe that purpose is served by <a href="https://web.hypothes.is/">Hypothesis</a>. For now, I see this extension as a useful way for me to save highlights, share specific pieces of information on my website, and enable other people to do the same.</p>
+<p>If you have any suggestions or ideas on how I can improve highlight.js, let me know. The code is <a href="github.com/capjamesg/highlight.js">open source</a> and released into the public domain. I'm excited to keep using this extension myself.</p>
+<p><a href="https://news.indieweb.org/en" class="u-syndication">Also posted on IndieNews</a>.</p>
+		
+			<p>Tagged in <a href='/tag/highlights/'>highlights</a>, <a href='/tag/indieweb/'>indieweb</a>.</p>
+		
+	</section>
+	
+		<section class="other-posts social_interaction">
+			<h2>Read more content like this</h2>
+			<p>Check out the other posts I have written related to this article.</p>
+			<ul>
+				
+					<li><a href="https://jamesg.blog/assets/coffeeshop.jpg">Writing a New Tab Extension: Part II</a></li>
+				
+					<li><a href="https://jamesg.blog/assets/coffeeshop.jpg">Writing a New Tab Extension</a></li>
+				
+					<li><a href="https://jamesg.blog/assets/coffeeshop.jpg">My two-cup Chemex recipe</a></li>
+				
+					<li><a href="https://jamesg.blog/assets/coffeeshop.jpg">The Chemex: A week or two on</a></li>
+				
+					<li><a href="https://jamesg.blog/assets/coffeeshop.jpg">More testing with the Hario V60</a></li>
+				
+			</ul>
+			<a href="https://novacast.dev/u/jgb?query=Announcing highlight.js, an extension to highlight text on web pages" class="button">Explore more related content</a>
+			<p style="font-size: 12px; color: slategrey;">Powered by <a href="https://novacast.dev">Novacast</a></p>
+		</section>
+	
+	
+	<section class="webmention">
+    <h2>Responses</h2>
+    <div id="webmentions">
+      
+      <ul class="comments"><li>
+      <a class="reaction" rel="nofollow ugc" title="Ton Zijlstra replied" href="https://www.zylstra.org/blog/2023/01/22704/">
+        
+        💬
+        
+      </a>
+     <a class="source" rel="nofollow ugc" href="https://www.zylstra.org/blog/2023/01/22704/">Ton Zijlstra</a> <span class="name">highlight.js, an extension to highlight text on web pages</span></li><li>
+      <a class="reaction" rel="nofollow ugc" title="Jan Boddez replied" href="https://jan.boddez.net/notes/aecca7a4c1">
+        
+        <img src="https://jan.boddez.net/images/photo.jpg" loading="lazy" decoding="async" alt="Jan Boddez">
+      
+        💬
+        
+      </a>
+     <a class="source" rel="nofollow ugc" href="https://jan.boddez.net/notes/aecca7a4c1">Jan Boddez</a> <span class="text">Cool, James!
+Two questions:
+
+Is this, or are you planning to make it, compatible with text fragments?
+
+
+And: I have to admit I was a bit confused reading that title, as highlight.js, as far as I’m aware, is a rather popular (well over 20k GitHub stars, for what it’s worth) code highlighting solution.</span></li><li>
+      <a class="reaction" rel="nofollow ugc" title=" replied" href="https://capjamesg.micro.blog/2023/03/03/cool-post-yay.html">
+        
+        💬
+        
+      </a>
+     <a class="source h-entry" rel="nofollow ugc" href="https://capjamesg.micro.blog/2023/03/03/cool-post-yay.html" class="u-url">capjamesg.micro.blog</a> <span class="text p-name">Cool post! Yay!</span></li></ul>
+    </div>
+    <h2>Comment on this post</h2>
+    <p>Respond to this post by sending a <a href="https://indieweb.org/Webmention">Webmention</a>.</p>
+</section>
+	<footer>
+		<p>Link to this article: <a class="u-url" href="https://jamesg.blog/2022/12/30/highlight-js/">https://jamesg.blog/2022/12/30/highlight-js/</a></p>
+		<p>Have a comment? Email me at <a href="mailto:readers@jamesg.blog?subject=Announcing highlight.js, an extension to highlight text on web pages">readers@jamesg.blog</a>.</p>
+		<div class="bottom-navigation">
+			
+			
+		</div>
+	</footer>
+</article>
+      </div>
+      <p class="accessibility_label"><a href="#main">Go Back to the Top</a></p>
+      <footer>
+	<ul>
+		<li><a href="/search/?time_machine=true">Time Machine</a></li>
+		<li><a href="/coffee/maps/">Coffee Maps</a></li>
+		<li><a href="/talks/">Talks</a></li>
+		<li><a href="/sitemap/">Sitemap</a></li>
+		<li><a href="/archive/">Web Log Archive</a></li>
+		<li><a href="/privacy/" rel="privacy-policy">Privacy</a></li>
+		<li><a href="/feeds/posts.xml">RSS</a></li>
+	</ul>
+	<div class="indieweb_footer">
+		<a href="https://indieweb.org/Webmention" class="button-link"><img src="/assets/webmention_button.webp" alt="Webmention logo indicating that you can send a webmention to this blog" width="80" height="15" /></a>
+		<a href="https://indieweb.org" class="button-link"><img src="/assets/indieweb_button.webp" alt="IndieWeb logo" width="80" height="15" /></a><br />
+		<a href="https://microformats.org" class="button-link"><img src="/assets/microformats_button.webp" alt="Microformats logo" width="80" height="15" /></a><br />
+		<a href="https://xn--sr8hvo.ws/%F0%9F%98%85%F0%9F%8F%BD%E3%8A%97%EF%B8%8F/previous">←</a>
+		  IndieWeb Webring
+		<a href="https://xn--sr8hvo.ws/%F0%9F%98%85%F0%9F%8F%BD%E3%8A%97%EF%B8%8F/next">→</a>
+		<!-- I use lights.png in my Christmas theme. It takes me a while to re-find the lights every year so I thought I'd leave them commented here. -->
+		<!-- <img src="/assets/lights.png" alt="" /> -->
+	</div>
+</footer>
+
+<script src="/assets/webmention.min.js" async></script>
+<script src="/assets/js/seasonal.js"></script>
+      
+        <!-- This script lets me add hovercards to links. When you hover over a link in an
+            article, a card should appear with some meta information about the link.
+            Read more about this script at https://jamesg.blog/2022/10/12/hovercards/ -->
+        <script src="https://jamesg.blog/assets/js/hovercard.js"></script>
+      
+    </main>
+    <template>
+        <style>
+            * {
+                box-sizing: border-box;
+                font-family: sans-serif;
+            }
+            input, input[type="search"] {
+                padding: 0.5em;
+                border: 1px solid #ccc;
+                border-radius: 0.25em;
+                font-size: 1em;
+                width: 100%;
+            }
+            button, input[type="submit"] {
+                background-color: #EEBAB2;
+                color: black;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+                padding: 10px;
+            }
+            menu {
+                margin: 0;
+                padding: 0;
+            }
+            ul {
+                padding: 0;
+            }
+            ul li {
+                list-style: none;
+                padding: 1em;
+                border-bottom: 1px solid #ccc;
+            }
+            ul li:hover {
+                background-color: #eee;
+            }
+            ul li:last-child {
+                border-bottom: none;
+            }
+            a {
+                text-decoration: none;
+                color: black;
+            }
+            input {
+                box-sizing: border-box;
+            }
+            #command-k {
+                max-width: 30em;
+                width: 30em !important;
+                overflow: hidden;
+            }
+            #command-k-search-results {
+                max-height: 200px;
+                overflow-y: scroll;
+                padding: 0;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                list-style: none;
+                border-bottom: 1px solid #ccc;
+            }
+            #command-k-search-results li:hover {
+                background-color: #eee;
+            }
+            .category {
+                background-color: #ccc;
+                margin-left: 0.5em;
+                border-radius: 0.25em;
+                font-size: 0.8em;
+                padding: 3px;
+            }
+        </style>
+    </template>
+    <command-k></command-k>
+    <script src="/assets/js/commandk.js"></script>
+    <script>
+        function searchFunction (searchField, shadowRoot) {
+            fetch(`https://jamesg.blog/qs/search?q=${searchField.value}`)
+            .then((response) => response.json())
+            .then((data) => {
+                shadowRoot.querySelector('#command-k-search-results').innerHTML = '';
+                data.forEach((result) => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    const category = document.createElement('span');
+                    a.href = result.url;
+                    category.innerText = result.category;
+                    a.innerText = result.title;
+                    li.appendChild(a);
+                    category.classList.add('category');
+                    li.appendChild(category);
+                    shadowRoot.querySelector('#command-k-search-results').appendChild(li);
+                    shadowRoot.querySelector('#command-k-search-results').appendChild(li);
+                });
+            }).catch((error) => {
+                console.log(error);
+            });
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'k' && e.metaKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (e.key === 'k' && e.ctrlKey) {
+                e.preventDefault();
+                document.querySelector('command-k').open();
+            }
+        });
+    </script>
+    
+    <!-- This script enables code syntax highlighting on my blog post and code snippet pages. -->
+    <script src="/assets/js/prism.js"></script>
+    
+  </body>
+</html>
